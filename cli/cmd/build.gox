@@ -1,0 +1,200 @@
+package cmd
+
+import (
+	"flag"
+	"fmt"
+	"io"
+	"math/rand"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/germtb/goli"
+	"github.com/germtb/gox"
+)
+
+type BuildStepProps struct {
+	Label   string
+	Success bool
+	Err     string
+}
+
+func BuildStep(props BuildStepProps) gox.VNode {
+	if props.Success {
+		return <box direction="row">
+			<text color="green">{"✓"}</text>
+			<text>{" " + props.Label}</text>
+		</box>
+	}
+	return <box direction="column">
+		<box direction="row">
+			<text color="red">{"✗"}</text>
+			<text>{" " + props.Label}</text>
+		</box>
+		<text dim={true}>{"    " + props.Err}</text>
+	</box>
+}
+
+func RunBuild(args []string) error {
+	// Separate positional args from flags
+	var positional []string
+	var flagArgs []string
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
+			flagArgs = append(flagArgs, arg)
+		} else {
+			positional = append(positional, arg)
+		}
+	}
+
+	fs := flag.NewFlagSet("build", flag.ExitOnError)
+	outputFlag := fs.String("o", "", "Output directory")
+	if err := fs.Parse(flagArgs); err != nil {
+		return err
+	}
+
+	// Optional project directory
+	projectDir := "."
+	if len(positional) > 0 {
+		projectDir = positional[0]
+	}
+
+	outputDir := *outputFlag
+	if outputDir == "" {
+		outputDir = filepath.Join(projectDir, "build")
+	}
+
+	serverDir := filepath.Join(projectDir, "server")
+	clientDir := filepath.Join(projectDir, "client")
+
+	// Validate project structure
+	if _, err := os.Stat(filepath.Join(serverDir, "main.go")); os.IsNotExist(err) {
+		goli.Print(<BuildStep Label="Validate project" Success={false} Err={"server/main.go not found in " + projectDir} />)
+		return fmt.Errorf("not a gap project (server/main.go not found in %s)", projectDir)
+	}
+	if _, err := os.Stat(filepath.Join(clientDir, "package.json")); os.IsNotExist(err) {
+		goli.Print(<BuildStep Label="Validate project" Success={false} Err={"client/package.json not found in " + projectDir} />)
+		return fmt.Errorf("not a gap project (client/package.json not found in %s)", projectDir)
+	}
+	goli.Print(<BuildStep Label="Validate project" Success={true} Err="" />)
+
+	// Create temp dir
+	tmpDir := fmt.Sprintf(".gap-build-tmp-%d", rand.Int())
+	if err := os.MkdirAll(tmpDir, 0755); err != nil {
+		goli.Print(<BuildStep Label="Create temp directory" Success={false} Err={err.Error()} />)
+		return err
+	}
+	cleanup := func() { os.RemoveAll(tmpDir) }
+
+	// Step 1: npm run build in client/
+	npmCmd := exec.Command("npm", "run", "build")
+	npmCmd.Dir = clientDir
+	npmCmd.Stderr = os.Stderr
+	if out, err := npmCmd.Output(); err != nil {
+		cleanup()
+		errMsg := string(out)
+		if exitErr, ok := err.(*exec.ExitError); ok && len(exitErr.Stderr) > 0 {
+			errMsg = string(exitErr.Stderr)
+		}
+		goli.Print(<BuildStep Label="Build client (npm run build)" Success={false} Err={errMsg} />)
+		return fmt.Errorf("client build failed: %w", err)
+	}
+	goli.Print(<BuildStep Label="Build client (npm run build)" Success={true} Err="" />)
+
+	// Step 2: go build in server/
+	serverBin := filepath.Join(tmpDir, "server")
+	goCmd := exec.Command("go", "build", "-o", mustAbs(serverBin), ".")
+	goCmd.Dir = serverDir
+	goCmd.Stderr = os.Stderr
+	if out, err := goCmd.Output(); err != nil {
+		cleanup()
+		errMsg := string(out)
+		if exitErr, ok := err.(*exec.ExitError); ok && len(exitErr.Stderr) > 0 {
+			errMsg = string(exitErr.Stderr)
+		}
+		goli.Print(<BuildStep Label="Build server (go build)" Success={false} Err={errMsg} />)
+		return fmt.Errorf("server build failed: %w", err)
+	}
+	goli.Print(<BuildStep Label="Build server (go build)" Success={true} Err="" />)
+
+	// Step 3: Copy server/public/ → tmpDir/public/
+	srcPublic := filepath.Join(serverDir, "public")
+	dstPublic := filepath.Join(tmpDir, "public")
+	if err := copyDir(srcPublic, dstPublic); err != nil {
+		cleanup()
+		goli.Print(<BuildStep Label="Copy public assets" Success={false} Err={err.Error()} />)
+		return fmt.Errorf("copying public dir: %w", err)
+	}
+	goli.Print(<BuildStep Label="Copy public assets" Success={true} Err="" />)
+
+	// Step 4: Atomic swap
+	os.RemoveAll(outputDir)
+	if err := os.Rename(tmpDir, outputDir); err != nil {
+		cleanup()
+		goli.Print(<BuildStep Label="Finalize output" Success={false} Err={err.Error()} />)
+		return fmt.Errorf("rename failed: %w", err)
+	}
+
+	runCmd := "    cd " + outputDir + " && ./server"
+	goli.Print(<box direction="column">
+		<box direction="row">
+			<text color="green">{"✓"}</text>
+			<text bold={true}>{" Build complete → " + outputDir + "/"}</text>
+		</box>
+		<text>{""}</text>
+		<text dim={true}>{"  Run with:"}</text>
+		<text dim={true}>{runCmd}</text>
+	</box>)
+
+	return nil
+}
+
+func mustAbs(path string) string {
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return path
+	}
+	return abs
+}
+
+func copyDir(src, dst string) error {
+	return filepath.WalkDir(src, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dst, rel)
+
+		if d.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+
+		return copyFile(path, target)
+	})
+}
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
+	}
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	return err
+}

@@ -1,0 +1,28 @@
+syntax = "proto3";
+package with_auth;
+option go_package = "./generated";
+
+service AppService {
+  rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
+  rpc CreateItem(CreateItemRequest) returns (CreateItemResponse);
+}
+
+message Item {
+  string id = 1;
+  string title = 2;
+  string created_by = 3;
+}
+
+message GetItemsRequest {}
+
+message GetItemsResponse {
+  repeated Item items = 1;
+}
+
+message CreateItemRequest {
+  string title = 1;
+}
+
+message CreateItemResponse {
+  Item item = 1;
+}

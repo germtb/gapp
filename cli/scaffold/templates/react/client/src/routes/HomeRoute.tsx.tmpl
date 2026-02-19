@@ -1,0 +1,92 @@
+import { useState } from "react";
+import { useStore } from "@gap/react";
+import { Observable } from "rxjs";
+import type { RpcDeclaration } from "@gap/client";
+import { rpc } from "../rpc";
+import { itemStore } from "../stores/ItemStore";
+import { FileChunk } from "../generated/service";
+
+export const homeRoute = {
+  path: "/",
+  factory: () => ({
+    component: HomeRoute,
+    rpcs: [
+      { method: "GetItems" },
+    ] as RpcDeclaration[],
+  }),
+};
+
+export function HomeRoute() {
+  const { items, lastUpload } = useStore(itemStore);
+  const [title, setTitle] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+    await rpc.CreateItem({ title: title.trim() });
+    setTitle("");
+    await rpc.GetItems({});
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 64 * 1024;
+
+    const observable = new Observable<Uint8Array>((subscriber) => {
+      for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        const chunk = bytes.slice(offset, offset + chunkSize);
+        const encoded = FileChunk.encode({
+          data: chunk,
+          filename: file.name,
+        }).finish();
+        subscriber.next(encoded);
+      }
+      if (bytes.length === 0) {
+        const encoded = FileChunk.encode({
+          data: new Uint8Array(0),
+          filename: file.name,
+        }).finish();
+        subscriber.next(encoded);
+      }
+      subscriber.complete();
+    });
+
+    await rpc.Upload(observable);
+    e.target.value = "";
+  };
+
+  return (
+    <div style={{ padding: "2rem", maxWidth: "600px", margin: "0 auto" }}>
+      <h1><<.Name>></h1>
+      <form onSubmit={handleSubmit} style={{ marginBottom: "1rem" }}>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="New item..."
+          style={{ padding: "0.5rem", marginRight: "0.5rem" }}
+        />
+        <button type="submit" style={{ padding: "0.5rem 1rem" }}>
+          Add
+        </button>
+      </form>
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>{item.title}</li>
+        ))}
+      </ul>
+      <hr style={{ margin: "2rem 0" }} />
+      <h2>Upload File</h2>
+      <input type="file" onChange={handleUpload} />
+      {lastUpload && (
+        <p>
+          Uploaded: {lastUpload.filename} ({lastUpload.bytesReceived} bytes)
+        </p>
+      )}
+    </div>
+  );
+}

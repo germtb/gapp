@@ -1,0 +1,16 @@
+import { defineConfig } from "vite";
+import { gapPreloadPlugin } from "@gap/client/vite";
+
+export default defineConfig({
+  plugins: [gapPreloadPlugin()],
+  server: {
+    proxy: {
+      "/rpc": "http://localhost:8080",
+    },
+  },
+  build: {
+    outDir: "../server/public",
+    emptyOutDir: true,
+    manifest: true,
+  },
+});

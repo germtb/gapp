@@ -1,0 +1,29 @@
+import { Store } from "@gap/client";
+import type { RpcResult } from "../rpcTypes";
+import type { Item, UploadResult } from "../generated/service";
+
+type ItemState = {
+  items: Item[];
+  lastUpload: UploadResult | null;
+};
+
+class ItemStore extends Store<ItemState> {
+  constructor() {
+    super({ items: [], lastUpload: null });
+  }
+
+  reduceRpc(state: ItemState, event: RpcResult): ItemState {
+    if (event.method === "GetItems" && event.result.isOk()) {
+      return { ...state, items: event.result.unwrap().items };
+    }
+    if (event.method === "CreateItem" && event.result.isOk()) {
+      return { ...state, items: [...state.items, event.result.unwrap().item!] };
+    }
+    if (event.method === "Upload" && event.result.isOk()) {
+      return { ...state, lastUpload: event.result.unwrap() as UploadResult };
+    }
+    return state;
+  }
+}
+
+export const itemStore = new ItemStore();

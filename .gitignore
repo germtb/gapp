@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Gap dev artifacts
+.gap/
+
+# Go binaries
+cli/gap-cli
+cli/gap
+gap-cli
+examples/with-auth/server/server
+
+# Gox source maps
+*.go.map
+
+# Dev test projects
+cli/testapp/
+cli/myapp/
+cli/test/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

@@ -1,0 +1,9 @@
+import { createRpcTransport, createRpcProxy } from "@gap/client";
+import { AppServiceClientImpl } from "./generated/service";
+
+const transport = createRpcTransport({
+  url: "/rpc",
+});
+
+const baseClient = new AppServiceClientImpl(transport);
+export const rpc = createRpcProxy(baseClient);

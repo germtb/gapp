@@ -1,0 +1,132 @@
+package main
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"sync"
+
+	gap "github.com/germtb/gap"
+	pb "<<.Module>>/server/generated"
+	"google.golang.org/protobuf/proto"
+)
+
+type App struct {
+	mu     sync.Mutex
+	items  []*pb.Item
+	nextID int
+}
+
+func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	app := &App{}
+
+	dispatcher := gap.NewDispatcher()
+
+	dispatcher.Unary["GetItems"] = func(w http.ResponseWriter, r *http.Request, method string, body []byte) ([]byte, error) {
+		app.mu.Lock()
+		defer app.mu.Unlock()
+		resp := &pb.GetItemsResponse{Items: app.items}
+		return proto.Marshal(resp)
+	}
+
+	dispatcher.Unary["CreateItem"] = func(w http.ResponseWriter, r *http.Request, method string, body []byte) ([]byte, error) {
+		var req pb.CreateItemRequest
+		if err := proto.Unmarshal(body, &req); err != nil {
+			return nil, gap.ErrValidation("invalid request body")
+		}
+		app.mu.Lock()
+		defer app.mu.Unlock()
+		app.nextID++
+		item := &pb.Item{
+			Id:        fmt.Sprintf("%d", app.nextID),
+			Title:     req.Title,
+			Completed: false,
+		}
+		app.items = append(app.items, item)
+		resp := &pb.CreateItemResponse{Item: item}
+		return proto.Marshal(resp)
+	}
+
+	dispatcher.Unary["Upload"] = func(w http.ResponseWriter, r *http.Request, method string, body []byte) ([]byte, error) {
+		reader := gap.NewMessageReader(body)
+		var filename string
+		var totalBytes int64
+
+		for {
+			msg, err := reader.Next()
+			if err != nil {
+				break
+			}
+			var chunk pb.FileChunk
+			if err := proto.Unmarshal(msg, &chunk); err != nil {
+				return nil, gap.ErrValidation("invalid file chunk")
+			}
+			if filename == "" {
+				filename = chunk.Filename
+			}
+			totalBytes += int64(len(chunk.Data))
+		}
+
+		resp := &pb.UploadResult{
+			Filename:      filename,
+			BytesReceived: totalBytes,
+		}
+		return proto.Marshal(resp)
+	}
+
+	preload := gap.NewPreloadEngine(gap.PreloadEngineConfig{
+		Routes: pb.RoutePreloads,
+		PreloadFunc: func(ctx context.Context, r *http.Request, method string, params map[string]string) (proto.Message, proto.Message, error) {
+			body, err := dispatcher.Unary[method](nil, r, method, nil)
+			if err != nil {
+				return nil, nil, err
+			}
+			switch method {
+			case "GetItems":
+				req := &pb.GetItemsRequest{}
+				resp := &pb.GetItemsResponse{}
+				if err := proto.Unmarshal(body, resp); err != nil {
+					return nil, nil, err
+				}
+				return req, resp, nil
+			default:
+				return nil, nil, fmt.Errorf("unknown preload method: %s", method)
+			}
+		},
+	})
+
+	mux := http.NewServeMux()
+
+	// Health check
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	})
+
+	// Serve static assets in production
+	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("public/assets"))))
+
+	// RPC endpoint
+	mux.Handle("/rpc", dispatcher)
+
+	// Preload endpoint for Vite dev mode
+	mux.HandleFunc("/__preload", preload.HandlePreloadEndpoint)
+
+	// Catch-all: serve HTML with preloaded data
+	mux.HandleFunc("/", preload.ServeHTML)
+
+	addr := ":" + port
+	slog.Info("Server starting", "url", "http://localhost:"+port)
+	if err := gap.ListenAndServe(addr, mux); err != http.ErrServerClosed {
+		slog.Error("Server error", "error", err)
+		os.Exit(1)
+	}
+}

@@ -1,0 +1,19 @@
+{
+  "name": "@gap/codegen",
+  "version": "0.1.0",
+  "description": "Code generation utilities for the gap framework",
+  "type": "module",
+  "scripts": {
+    "generate-preload-config": "bun run generate-preload-config.ts"
+  },
+  "dependencies": {
+    "typescript": "^5.0.0"
+  },
+  "license": "MIT",
+  "author": "Gerard Abellan Serrano",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/germtb/gap.git",
+    "directory": "codegen"
+  }
+}

@@ -1,0 +1,108 @@
+import { Observable } from "rxjs";
+import type { RpcDeclaration } from "@gap/client";
+import { rpc } from "../rpc";
+import { itemStore } from "../stores/ItemStore";
+import { FileChunk } from "../generated/service";
+
+export const homeRoute = {
+  path: "/",
+  factory: () => ({
+    render: HomeRoute,
+    rpcs: [
+      { method: "GetItems" },
+    ] as RpcDeclaration[],
+  }),
+};
+
+export function HomeRoute(root: HTMLElement): () => void {
+  const container = document.createElement("div");
+  container.style.cssText = "padding: 2rem; max-width: 600px; margin: 0 auto";
+
+  const h1 = document.createElement("h1");
+  h1.textContent = "<<.Name>>";
+
+  const form = document.createElement("form");
+  form.style.marginBottom = "1rem";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "New item...";
+  input.style.cssText = "padding: 0.5rem; margin-right: 0.5rem";
+
+  const button = document.createElement("button");
+  button.type = "submit";
+  button.style.cssText = "padding: 0.5rem 1rem";
+  button.textContent = "Add";
+
+  form.append(input, button);
+
+  const ul = document.createElement("ul");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = input.value.trim();
+    if (!title) return;
+    await rpc.CreateItem({ title });
+    input.value = "";
+    await rpc.GetItems({});
+  });
+
+  const hr = document.createElement("hr");
+  hr.style.margin = "2rem 0";
+
+  const h2 = document.createElement("h2");
+  h2.textContent = "Upload File";
+
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+
+  const uploadResult = document.createElement("p");
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 64 * 1024;
+
+    const observable = new Observable<Uint8Array>((subscriber) => {
+      for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+        const chunk = bytes.slice(offset, offset + chunkSize);
+        const encoded = FileChunk.encode({
+          data: chunk,
+          filename: file.name,
+        }).finish();
+        subscriber.next(encoded);
+      }
+      if (bytes.length === 0) {
+        const encoded = FileChunk.encode({
+          data: new Uint8Array(0),
+          filename: file.name,
+        }).finish();
+        subscriber.next(encoded);
+      }
+      subscriber.complete();
+    });
+
+    await rpc.Upload(observable);
+    fileInput.value = "";
+  });
+
+  container.append(h1, form, ul, hr, h2, fileInput, uploadResult);
+  root.appendChild(container);
+
+  const unsubscribe = itemStore.subscribe((state) => {
+    ul.innerHTML = "";
+    for (const item of state.items) {
+      const li = document.createElement("li");
+      li.textContent = item.title;
+      ul.appendChild(li);
+    }
+    if (state.lastUpload) {
+      uploadResult.textContent = `Uploaded: ${state.lastUpload.filename} (${state.lastUpload.bytesReceived} bytes)`;
+    }
+  });
+
+  return unsubscribe;
+}

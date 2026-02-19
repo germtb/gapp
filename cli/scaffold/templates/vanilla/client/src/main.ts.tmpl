@@ -1,0 +1,35 @@
+import { dispatchPreloaded, Router, type Route } from "@gap/client";
+import { decodePreloaded } from "./preload";
+import { HomeRoute, homeRoute } from "./routes/HomeRoute";
+import "./stores/ItemStore";
+
+type RouteMetadata = {
+  render: (root: HTMLElement) => void;
+  cleanup?: () => void;
+};
+
+const routes: Route<string, RouteMetadata>[] = [
+  {
+    path: "/",
+    factory: () => ({ render: HomeRoute }),
+  },
+];
+
+const router = new Router(routes);
+
+async function main() {
+  await dispatchPreloaded(decodePreloaded);
+
+  const root = document.getElementById("root");
+  if (!root) return;
+
+  let currentCleanup: (() => void) | undefined;
+
+  router.onNavigate((metadata) => {
+    if (currentCleanup) currentCleanup();
+    root.innerHTML = "";
+    currentCleanup = metadata.render(root);
+  });
+}
+
+main();

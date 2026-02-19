@@ -1,0 +1,61 @@
+{
+  "name": "@gap/client",
+  "version": "0.1.0",
+  "description": "Client-side runtime for the gap full-stack framework",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./vite": {
+      "types": "./dist/vitePlugin.d.ts",
+      "import": "./dist/vitePlugin.js",
+      "require": "./dist/vitePlugin.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.0.0",
+    "rxjs": "^7.8.0"
+  },
+  "peerDependencies": {
+    "vite": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "tsup": "^8.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  },
+  "license": "MIT",
+  "author": "Gerard Abellan Serrano",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/germtb/gap.git",
+    "directory": "client"
+  },
+  "keywords": [
+    "gap",
+    "rpc",
+    "protobuf",
+    "full-stack",
+    "framework"
+  ]
+}

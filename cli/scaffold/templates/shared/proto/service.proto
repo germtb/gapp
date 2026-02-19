@@ -1,0 +1,39 @@
+syntax = "proto3";
+package <<.ProtoPackage>>;
+option go_package = "./generated";
+
+service AppService {
+  rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
+  rpc CreateItem(CreateItemRequest) returns (CreateItemResponse);
+  rpc Upload(stream FileChunk) returns (UploadResult);
+}
+
+message Item {
+  string id = 1;
+  string title = 2;
+  bool completed = 3;
+}
+
+message GetItemsRequest {}
+
+message GetItemsResponse {
+  repeated Item items = 1;
+}
+
+message CreateItemRequest {
+  string title = 1;
+}
+
+message CreateItemResponse {
+  Item item = 1;
+}
+
+message FileChunk {
+  bytes data = 1;
+  string filename = 2;
+}
+
+message UploadResult {
+  string filename = 1;
+  int64 bytes_received = 2;
+}

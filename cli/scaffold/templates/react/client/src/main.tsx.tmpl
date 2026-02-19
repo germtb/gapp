@@ -1,0 +1,37 @@
+import { createRoot } from "react-dom/client";
+import { dispatchPreloaded, Router, type Route } from "@gap/client";
+import { useCurrentRoute } from "@gap/react";
+import { decodePreloaded } from "./preload";
+import { HomeRoute, homeRoute } from "./routes/HomeRoute";
+import "./stores/ItemStore";
+
+type RouteMetadata = {
+  component: () => React.ReactNode;
+};
+
+const routes: Route<string, RouteMetadata>[] = [
+  {
+    path: "/",
+    factory: () => ({ component: HomeRoute }),
+  },
+];
+
+const router = new Router(routes);
+
+function App() {
+  const metadata = useCurrentRoute(router);
+  if (!metadata) return null;
+  const Component = metadata.component;
+  return <Component />;
+}
+
+async function main() {
+  await dispatchPreloaded(decodePreloaded);
+
+  const root = document.getElementById("root");
+  if (root) {
+    createRoot(root).render(<App />);
+  }
+}
+
+main();

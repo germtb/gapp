@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>{{.AppName}}</title>
+    <meta name="description" content="{{.AppName}}">
+    <script>
+        window.__PRELOADED__ = {{.PreloadedJSON}};
+        window.__PRELOAD_TIMESTAMP__ = {{.Timestamp}};
+    </script>
+    <script type="module" crossorigin src="{{.AssetsJS}}"></script>
+    <link rel="stylesheet" crossorigin href="{{.AssetsCSS}}">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
