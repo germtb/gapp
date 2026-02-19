@@ -36,4 +36,4 @@ export {
   type RpcDeclaration,
   type DecoderMap,
 } from "./preload";
-export { gapPreloadPlugin } from "./vitePlugin";
+export { gappPreloadPlugin } from "./vitePlugin";

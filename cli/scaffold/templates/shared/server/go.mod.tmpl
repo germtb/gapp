@@ -3,9 +3,9 @@ module <<.Module>>/server
 go 1.24.0
 
 require (
-	github.com/germtb/gap v0.1.0
+	github.com/germtb/gapp v0.2.0
 	google.golang.org/protobuf v1.36.5
 )
-<<if .GapServerPath>>
-replace github.com/germtb/gap => <<.GapServerPath>>
+<<if .GappServerPath>>
+replace github.com/germtb/gapp => <<.GappServerPath>>
 <<end>>

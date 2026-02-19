@@ -1,4 +1,4 @@
-import { Store } from "@gap/client";
+import { Store } from "@gapp/client";
 import type { RpcResult } from "../rpcTypes";
 import type { Item } from "../generated/service";
 

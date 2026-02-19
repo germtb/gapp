@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/germtb/gap/cli/cmd"
+	"github.com/germtb/gapp/cli/cmd"
 )
 
 func main() {
@@ -18,44 +18,44 @@ func main() {
 	switch command {
 	case "init":
 		if err := cmd.RunInit(os.Args[2:]); err != nil {
-			fmt.Fprintf(os.Stderr, "gap: %v\n", err)
+			fmt.Fprintf(os.Stderr, "gapp: %v\n", err)
 			os.Exit(1)
 		}
 	case "codegen":
 		if err := cmd.RunCodegen(os.Args[2:]); err != nil {
-			fmt.Fprintf(os.Stderr, "gap: %v\n", err)
+			fmt.Fprintf(os.Stderr, "gapp: %v\n", err)
 			os.Exit(1)
 		}
 	case "run":
 		if err := cmd.RunRun(os.Args[2:]); err != nil {
-			fmt.Fprintf(os.Stderr, "gap: %v\n", err)
+			fmt.Fprintf(os.Stderr, "gapp: %v\n", err)
 			os.Exit(1)
 		}
 	case "build":
 		if err := cmd.RunBuild(os.Args[2:]); err != nil {
-			fmt.Fprintf(os.Stderr, "gap: %v\n", err)
+			fmt.Fprintf(os.Stderr, "gapp: %v\n", err)
 			os.Exit(1)
 		}
 	case "help", "-h", "--help":
 		printUsage()
 	default:
-		fmt.Fprintf(os.Stderr, "gap: unknown command %q\n", command)
+		fmt.Fprintf(os.Stderr, "gapp: unknown command %q\n", command)
 		printUsage()
 		os.Exit(1)
 	}
 }
 
 func printUsage() {
-	fmt.Println(`gap - Full-stack Go + TypeScript framework
+	fmt.Println(`gapp - Full-stack Go + TypeScript framework
 
 Usage:
-  gap <command> [arguments]
+  gapp <command> [arguments]
 
 Commands:
-  init <name>    Create a new gap project
+  init <name>    Create a new gapp project
   codegen        Run proto codegen (Go + TypeScript)
   run [path]     Start server and client dev server
-  build [path]   Build for production (server binary + client bundle)
+  build [path]   Build for production
   help           Show this help message
 
 Init Options:
@@ -75,10 +75,10 @@ Build Options:
   -o <dir>               Output directory (default: <path>/build)
 
 Examples:
-  gap init myapp -y && gap run myapp
-  gap run .
-  gap run ./examples/with-auth
-  gap build . -o dist
+  gapp init myapp -y && gapp run myapp
+  gapp run .
+  gapp run ./examples/with-auth
+  gapp build . -o dist
 
-Use "gap help" for more information.`)
+Use "gapp help" for more information.`)
 }

@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.0.0",
-    "@gap/client": "file:../../client",
-    "@gap/react": "file:../../react",
+    "@gapp/client": "^0.1.0",
+    "@gapp/react": "^0.1.0",
     "siauth-ts": "^0.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

@@ -6,13 +6,13 @@ dist/
 build/
 *.tsbuildinfo
 
-# Gap dev artifacts
-.gap/
+# Gapp dev artifacts
+.gapp/
 
 # Go binaries
-cli/gap-cli
-cli/gap
-gap-cli
+cli/gapp-cli
+cli/gapp
+gapp-cli
 examples/with-auth/server/server
 
 # Gox source maps

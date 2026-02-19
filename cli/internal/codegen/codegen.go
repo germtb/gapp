@@ -153,18 +153,18 @@ func HashFile(path string) (string, error) {
 	return hex.EncodeToString(h[:]), nil
 }
 
-// ReadStoredHash reads the stored codegen hash from .gap/codegen.hash.
+// ReadStoredHash reads the stored codegen hash from .gapp/codegen.hash.
 func ReadStoredHash(projectDir string) string {
-	data, err := os.ReadFile(filepath.Join(projectDir, ".gap", "codegen.hash"))
+	data, err := os.ReadFile(filepath.Join(projectDir, ".gapp", "codegen.hash"))
 	if err != nil {
 		return ""
 	}
 	return string(data)
 }
 
-// WriteHash writes the codegen hash to .gap/codegen.hash.
+// WriteHash writes the codegen hash to .gapp/codegen.hash.
 func WriteHash(projectDir, hash string) error {
-	dir := filepath.Join(projectDir, ".gap")
+	dir := filepath.Join(projectDir, ".gapp")
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}

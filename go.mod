@@ -1,4 +1,4 @@
-module github.com/germtb/gap
+module github.com/germtb/gapp
 
 go 1.24
 

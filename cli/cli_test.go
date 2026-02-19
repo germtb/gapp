@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/germtb/gap/cli/internal/codegen"
-	"github.com/germtb/gap/cli/scaffold"
+	"github.com/germtb/gapp/cli/internal/codegen"
+	"github.com/germtb/gapp/cli/scaffold"
 )
 
 func TestInitGeneratesReactProject(t *testing.T) {
@@ -45,7 +45,6 @@ func TestInitGeneratesReactProject(t *testing.T) {
 		"client/src/preload.ts",
 		"client/src/stores/ItemStore.ts",
 		"client/src/routes/HomeRoute.tsx",
-		"gap-codegen.sh",
 	}
 
 	for _, f := range expectedFiles {
@@ -97,15 +96,6 @@ func TestInitGeneratesReactProject(t *testing.T) {
 		t.Error("server/main.go does not contain correct import path")
 	}
 
-	// Verify gap-codegen.sh is executable
-	info, err := os.Stat(filepath.Join(projectDir, "gap-codegen.sh"))
-	if err != nil {
-		t.Fatalf("Failed to stat gap-codegen.sh: %v", err)
-	}
-	if info.Mode()&0111 == 0 {
-		t.Error("gap-codegen.sh is not executable")
-	}
-
 	// Verify react deps in package.json
 	pkgContent, err := os.ReadFile(filepath.Join(projectDir, "client/package.json"))
 	if err != nil {
@@ -114,8 +104,8 @@ func TestInitGeneratesReactProject(t *testing.T) {
 	if !strings.Contains(string(pkgContent), `"react"`) {
 		t.Error("React package.json should contain react dependency")
 	}
-	if !strings.Contains(string(pkgContent), `"@gap/react"`) {
-		t.Error("React package.json should contain @gap/react dependency")
+	if !strings.Contains(string(pkgContent), `"@gapp/react"`) {
+		t.Error("React package.json should contain @gapp/react dependency")
 	}
 }
 
@@ -170,8 +160,8 @@ func TestInitGeneratesVanillaProject(t *testing.T) {
 	if strings.Contains(string(pkgContent), `"react"`) {
 		t.Error("Vanilla package.json should not contain react dependency")
 	}
-	if strings.Contains(string(pkgContent), `"@gap/react"`) {
-		t.Error("Vanilla package.json should not contain @gap/react dependency")
+	if strings.Contains(string(pkgContent), `"@gapp/react"`) {
+		t.Error("Vanilla package.json should not contain @gapp/react dependency")
 	}
 
 	// Verify no jsx in tsconfig.json
@@ -190,7 +180,6 @@ func TestInitGeneratesVanillaProject(t *testing.T) {
 		"server/main.go",
 		"client/src/rpc.ts",
 		"client/src/stores/ItemStore.ts",
-		"gap-codegen.sh",
 	}
 	for _, f := range sharedFiles {
 		path := filepath.Join(projectDir, f)

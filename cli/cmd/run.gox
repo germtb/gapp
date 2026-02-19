@@ -73,7 +73,7 @@ func RunRun(args []string) error {
 	if _, err := os.Stat(filepath.Join(serverDir, "main.go")); os.IsNotExist(err) {
 		goli.Print(<box direction="row">
 			<text color="red">{"✗"}</text>
-			<text>{" Not a gap project (server/main.go not found in " + projectDir + ")"}</text>
+			<text>{" Not a gapp project (server/main.go not found in " + projectDir + ")"}</text>
 		</box>)
 		return err
 	}

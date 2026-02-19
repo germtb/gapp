@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	gap "github.com/germtb/gap"
+	gapp "github.com/germtb/gapp"
 	"github.com/germtb/siauth"
 	pb "with-auth/server/generated"
 	"google.golang.org/protobuf/proto"
@@ -50,11 +50,11 @@ func main() {
 	}
 
 	app := &App{}
-	dispatcher := gap.NewDispatcher()
+	dispatcher := gapp.NewDispatcher()
 
 	// Auth middleware: validate token on every request, store in context if valid.
-	// Uses gap.AuthMiddleware which accepts any func(r) -> any.
-	dispatcher.Use(gap.AuthMiddleware(func(r *http.Request) any {
+	// Uses gapp.AuthMiddleware which accepts any func(r) -> any.
+	dispatcher.Use(gapp.AuthMiddleware(func(r *http.Request) any {
 		token, _ := siauth.ValidateAuthToken(r, auth)
 		return token // nil if not authenticated — that's fine
 	}))
@@ -68,16 +68,16 @@ func main() {
 	}
 
 	// Protected handler — only authenticated users can create items.
-	// gap.RequireAuth returns 401 if no token in context.
-	dispatcher.Unary["CreateItem"] = gap.RequireAuth(
+	// gapp.RequireAuth returns 401 if no token in context.
+	dispatcher.Unary["CreateItem"] = gapp.RequireAuth(
 		func(w http.ResponseWriter, r *http.Request, method string, body []byte) ([]byte, error) {
 			var req pb.CreateItemRequest
 			if err := proto.Unmarshal(body, &req); err != nil {
-				return nil, gap.ErrValidation("invalid request body")
+				return nil, gapp.ErrValidation("invalid request body")
 			}
 
 			// Token is guaranteed non-nil inside RequireAuth
-			token := gap.GetAuthToken(r).(*siauth.Token)
+			token := gapp.GetAuthToken(r).(*siauth.Token)
 
 			app.mu.Lock()
 			defer app.mu.Unlock()
@@ -93,7 +93,7 @@ func main() {
 		},
 	)
 
-	preload := gap.NewPreloadEngine(gap.PreloadEngineConfig{
+	preload := gapp.NewPreloadEngine(gapp.PreloadEngineConfig{
 		Routes: pb.RoutePreloads,
 		PreloadFunc: func(ctx context.Context, r *http.Request, method string, params map[string]string) (proto.Message, proto.Message, error) {
 			body, err := dispatcher.Unary[method](nil, r, method, nil)
@@ -134,7 +134,7 @@ func main() {
 
 	addr := ":" + port
 	slog.Info("Server starting", "url", "http://localhost:"+port)
-	if err := gap.ListenAndServe(addr, mux); err != http.ErrServerClosed {
+	if err := gapp.ListenAndServe(addr, mux); err != http.ErrServerClosed {
 		slog.Error("Server error", "error", err)
 		os.Exit(1)
 	}

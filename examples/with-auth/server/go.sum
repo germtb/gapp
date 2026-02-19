@@ -2,6 +2,8 @@ github.com/coreos/go-oidc/v3 v3.17.0 h1:hWBGaQfbi0iVviX4ibC7bk8OKT5qNr4klBaCHVNv
 github.com/coreos/go-oidc/v3 v3.17.0/go.mod h1:wqPbKFrVnE90vty060SB40FCJ8fTHTxSwyXJqZH+sI8=
 github.com/fatih/color v1.18.0 h1:S8gINlzdQ840/4pfAwic/ZE0djQEH3wM94VfqLTZcOM=
 github.com/fatih/color v1.18.0/go.mod h1:4FelSpRwEGDpQ12mAdzqdOukCy4u8WUtOY6lkT/6HfU=
+github.com/germtb/gapp v0.2.0 h1:G+PyXc8zmo2dlDUsduoup/0Arbl3+aXt7K6SNmmPN7M=
+github.com/germtb/gapp v0.2.0/go.mod h1:AC2CbYDr3cvV+CtbJsgaR///LCXOhwa7lJvrY5YEzdY=
 github.com/germtb/siauth v0.3.5 h1:CzW2E1XgvtQfNQ7M44UW0omoU0/5+mj7G3tSCeoeqQw=
 github.com/germtb/siauth v0.3.5/go.mod h1:tQhZQfvwMsrkqKdAZ5kMLJdtTjglqffgprrvI0/asA4=
 github.com/germtb/sidb v0.3.2 h1:nVSv52GBTI/viisZJrD+waR+nJEs5eWjWd5ak8/IXDE=

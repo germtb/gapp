@@ -1,4 +1,4 @@
-import { createRpcTransport, createRpcProxy } from "@gap/client";
+import { createRpcTransport, createRpcProxy } from "@gapp/client";
 import { AuthClientImpl } from "siauth-ts";
 import { AppServiceClientImpl } from "./generated/service";
 

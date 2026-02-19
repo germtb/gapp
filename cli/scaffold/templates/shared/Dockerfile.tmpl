@@ -9,7 +9,7 @@ RUN npm run build
 # Stage 2: Build server
 FROM golang:1.24-alpine AS server-builder
 WORKDIR /app/server
-# NOTE: If server/go.mod uses a local "replace" directive for the gap module,
+# NOTE: If server/go.mod uses a local "replace" directive for the gapp module,
 # you must update it to use a published version or vendor the dependency
 # before building with Docker.
 COPY server/go.mod server/go.sum ./

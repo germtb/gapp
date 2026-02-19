@@ -2,8 +2,7 @@
   "private": true,
   "workspaces": [
     "client",
-    "react",
-    "codegen"
+    "react"
   ],
   "scripts": {
     "build": "npm run build --workspace=client && npm run build --workspace=react",

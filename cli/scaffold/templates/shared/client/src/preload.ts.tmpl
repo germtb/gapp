@@ -1,4 +1,4 @@
-import { decodeAllPreloaded, type DecoderMap } from "@gap/client";
+import { decodeAllPreloaded, type DecoderMap } from "@gapp/client";
 import {
   GetItemsRequest,
   GetItemsResponse,

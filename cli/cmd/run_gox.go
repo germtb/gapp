@@ -60,7 +60,7 @@ func RunRun(args []string) error {
 			gox.Element("text", gox.Props{"color": "red"},
 				gox.V("✗")),
 			gox.Element("text", nil,
-				gox.V(" Not a gap project (server/main.go not found)"))))
+				gox.V(" Not a gapp project (server/main.go not found)"))))
 		return err
 	}
 

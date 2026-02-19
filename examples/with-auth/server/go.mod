@@ -3,7 +3,7 @@ module with-auth/server
 go 1.24.0
 
 require (
-	github.com/germtb/gap v0.0.0
+	github.com/germtb/gapp v0.2.0
 	github.com/germtb/siauth v0.3.5
 	google.golang.org/protobuf v1.36.10
 )
@@ -26,5 +26,3 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
 	google.golang.org/grpc v1.77.0 // indirect
 )
-
-replace github.com/germtb/gap => ../../../server

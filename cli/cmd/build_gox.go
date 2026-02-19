@@ -49,16 +49,16 @@ func RunBuild(args []string) error {
 	// Validate project structure
 	if _, err := os.Stat("server/main.go"); os.IsNotExist(err) {
 		goli.Print(BuildStep(BuildStepProps{Label: "Validate project", Success: false, Err: "server/main.go not found"}))
-		return fmt.Errorf("not a gap project (server/main.go not found)")
+		return fmt.Errorf("not a gapp project (server/main.go not found)")
 	}
 	if _, err := os.Stat("client/package.json"); os.IsNotExist(err) {
 		goli.Print(BuildStep(BuildStepProps{Label: "Validate project", Success: false, Err: "client/package.json not found"}))
-		return fmt.Errorf("not a gap project (client/package.json not found)")
+		return fmt.Errorf("not a gapp project (client/package.json not found)")
 	}
 	goli.Print(BuildStep(BuildStepProps{Label: "Validate project", Success: true, Err: ""}))
 
 	// Create temp dir
-	tmpDir := fmt.Sprintf(".gap-build-tmp-%d", rand.Int())
+	tmpDir := fmt.Sprintf(".gapp-build-tmp-%d", rand.Int())
 	if err := os.MkdirAll(tmpDir, 0755); err != nil {
 		goli.Print(BuildStep(BuildStepProps{Label: "Create temp directory", Success: false, Err: err.Error()}))
 		return err

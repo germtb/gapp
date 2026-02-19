@@ -1,4 +1,4 @@
-module github.com/germtb/gap/cli
+module github.com/germtb/gapp/cli
 
 go 1.24.0
 

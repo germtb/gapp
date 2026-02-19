@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { Store } from "@gap/client";
+import type { Store } from "@gapp/client";
 
 export function useStore<State>(store: Store<State>): State;
 export function useStore<State, Selection>(
