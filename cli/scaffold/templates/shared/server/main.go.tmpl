@@ -9,7 +9,7 @@ import (
 	"os"
 	"sync"
 
-	gap "github.com/germtb/gap"
+	gapp "github.com/germtb/gapp"
 	pb "<<.Module>>/server/generated"
 	"google.golang.org/protobuf/proto"
 )
@@ -28,7 +28,7 @@ func main() {
 
 	app := &App{}
 
-	dispatcher := gap.NewDispatcher()
+	dispatcher := gapp.NewDispatcher()
 
 	dispatcher.Unary["GetItems"] = func(w http.ResponseWriter, r *http.Request, method string, body []byte) ([]byte, error) {
 		app.mu.Lock()
@@ -40,7 +40,7 @@ func main() {
 	dispatcher.Unary["CreateItem"] = func(w http.ResponseWriter, r *http.Request, method string, body []byte) ([]byte, error) {
 		var req pb.CreateItemRequest
 		if err := proto.Unmarshal(body, &req); err != nil {
-			return nil, gap.ErrValidation("invalid request body")
+			return nil, gapp.ErrValidation("invalid request body")
 		}
 		app.mu.Lock()
 		defer app.mu.Unlock()
@@ -56,7 +56,7 @@ func main() {
 	}
 
 	dispatcher.Unary["Upload"] = func(w http.ResponseWriter, r *http.Request, method string, body []byte) ([]byte, error) {
-		reader := gap.NewMessageReader(body)
+		reader := gapp.NewMessageReader(body)
 		var filename string
 		var totalBytes int64
 
@@ -67,7 +67,7 @@ func main() {
 			}
 			var chunk pb.FileChunk
 			if err := proto.Unmarshal(msg, &chunk); err != nil {
-				return nil, gap.ErrValidation("invalid file chunk")
+				return nil, gapp.ErrValidation("invalid file chunk")
 			}
 			if filename == "" {
 				filename = chunk.Filename
@@ -82,7 +82,7 @@ func main() {
 		return proto.Marshal(resp)
 	}
 
-	preload := gap.NewPreloadEngine(gap.PreloadEngineConfig{
+	preload := gapp.NewPreloadEngine(gapp.PreloadEngineConfig{
 		Routes: pb.RoutePreloads,
 		PreloadFunc: func(ctx context.Context, r *http.Request, method string, params map[string]string) (proto.Message, proto.Message, error) {
 			body, err := dispatcher.Unary[method](nil, r, method, nil)
@@ -125,7 +125,7 @@ func main() {
 
 	addr := ":" + port
 	slog.Info("Server starting", "url", "http://localhost:"+port)
-	if err := gap.ListenAndServe(addr, mux); err != http.ErrServerClosed {
+	if err := gapp.ListenAndServe(addr, mux); err != http.ErrServerClosed {
 		slog.Error("Server error", "error", err)
 		os.Exit(1)
 	}

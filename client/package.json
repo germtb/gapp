@@ -1,7 +1,7 @@
 {
-  "name": "@gap/client",
+  "name": "@gapp/client",
   "version": "0.1.0",
-  "description": "Client-side runtime for the gap full-stack framework",
+  "description": "Client-side runtime for the gapp full-stack framework",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -48,11 +48,11 @@
   "author": "Gerard Abellan Serrano",
   "repository": {
     "type": "git",
-    "url": "https://github.com/germtb/gap.git",
+    "url": "https://github.com/germtb/gapp.git",
     "directory": "client"
   },
   "keywords": [
-    "gap",
+    "gapp",
     "rpc",
     "protobuf",
     "full-stack",

@@ -1,4 +1,4 @@
-import type { RpcResultFromService, RpcRequestFromService } from "@gap/client";
+import type { RpcResultFromService, RpcRequestFromService } from "@gapp/client";
 import type { AppServiceClientImpl } from "./generated/service";
 
 export type RpcResult = RpcResultFromService<AppServiceClientImpl>;

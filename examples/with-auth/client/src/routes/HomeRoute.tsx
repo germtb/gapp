@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useStore } from "@gap/react";
-import type { RpcDeclaration } from "@gap/client";
+import { useStore } from "@gapp/react";
+import type { RpcDeclaration } from "@gapp/client";
 import { rpc, authRpc } from "../rpc";
 import { itemStore } from "../stores/ItemStore";
 import { authStore } from "../stores/AuthStore";

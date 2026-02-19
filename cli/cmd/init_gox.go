@@ -10,7 +10,7 @@ import (
 	"github.com/germtb/goli"
 	"github.com/germtb/gox"
 
-	"github.com/germtb/gap/cli/scaffold"
+	"github.com/germtb/gapp/cli/scaffold"
 )
 
 type InitResultProps struct {
@@ -42,7 +42,7 @@ func InitResult(props InitResultProps) gox.VNode {
 				gox.V(props.Name))),
 		gox.Element("box", gox.Props{"direction": "row"},
 			gox.Element("text", gox.Props{"dim": true},
-				gox.V("    gap run"))))
+				gox.V("    gapp run"))))
 }
 
 type InitHintProps struct {
@@ -63,11 +63,11 @@ func InitHint(props InitHintProps) gox.VNode {
 		gox.Element("text", nil,
 			gox.V("")),
 		gox.Element("text", gox.Props{"dim": true},
-			gox.V("  gap init "+name+" --framework react    # React + TypeScript")),
+			gox.V("  gapp init "+name+" --framework react    # React + TypeScript")),
 		gox.Element("text", gox.Props{"dim": true},
-			gox.V("  gap init "+name+" --framework vanilla  # Plain TypeScript")),
+			gox.V("  gapp init "+name+" --framework vanilla  # Plain TypeScript")),
 		gox.Element("text", gox.Props{"dim": true},
-			gox.V("  gap init "+name+" -y                   # Default (react)")))
+			gox.V("  gapp init "+name+" -y                   # Default (react)")))
 }
 
 type InitErrorProps struct {
@@ -113,7 +113,7 @@ func RunInit(args []string) error {
 	}
 
 	if name == "" {
-		goli.Print(InitError(InitErrorProps{Err: fmt.Errorf("usage: gap init <name> --framework react|vanilla")}))
+		goli.Print(InitError(InitErrorProps{Err: fmt.Errorf("usage: gapp init <name> --framework react|vanilla")}))
 		return fmt.Errorf("missing project name")
 	}
 
@@ -146,16 +146,16 @@ func RunInit(args []string) error {
 		return fmt.Errorf("unknown framework %q", framework)
 	}
 
-	// Resolve gap package paths from the gap binary location
-	gapClientPath, gapReactPath, gapServerPath := resolveGapPackages()
+	// Resolve gapp package paths from the gapp binary location
+	gappClientPath, gappReactPath, gappServerPath := resolveGappPackages()
 
 	config := scaffold.ProjectConfig{
 		Name:          name,
 		Module:        module,
 		Framework:     fw,
-		GapClientPath: gapClientPath,
-		GapReactPath:  gapReactPath,
-		GapServerPath: gapServerPath,
+		GappClientPath: gappClientPath,
+		GappReactPath:  gappReactPath,
+		GappServerPath: gappServerPath,
 	}
 
 	files, err := scaffold.Generate(config, dir)
@@ -212,9 +212,9 @@ func RunInit(args []string) error {
 	return nil
 }
 
-// resolveGapPackages finds the @gap/client and @gap/react packages
-// relative to the gap binary location (gap/cli/ -> gap/client/, gap/react/)
-func resolveGapPackages() (clientPath, reactPath, serverPath string) {
+// resolveGappPackages finds the @gapp/client and @gapp/react packages
+// relative to the gapp binary location (gapp/cli/ -> gapp/client/, gapp/react/)
+func resolveGappPackages() (clientPath, reactPath, serverPath string) {
 	exe, err := os.Executable()
 	if err != nil {
 		return "", "", ""
@@ -224,14 +224,12 @@ func resolveGapPackages() (clientPath, reactPath, serverPath string) {
 	if err != nil {
 		return "", "", ""
 	}
-	// Binary is at gap/cli/gap-cli, so gap repo root is gap/cli/..
+	// Binary is at gapp/cli/gapp-cli, so gapp repo root is gapp/cli/..
 	cliDir := filepath.Dir(exe)
-	gapRoot := filepath.Dir(cliDir)
+	gappRoot := filepath.Dir(cliDir)
 
-	clientDir := filepath.Join(gapRoot, "client")
-	reactDir := filepath.Join(gapRoot, "react")
-	serverDir := filepath.Join(gapRoot, "server")
-
+	clientDir := filepath.Join(gappRoot, "client")
+	reactDir := filepath.Join(gappRoot, "react")
 	// Verify this is a dev checkout (not just an installed binary) by checking
 	// for expected files in each package directory.
 	if _, err := os.Stat(filepath.Join(clientDir, "package.json")); err == nil {
@@ -240,8 +238,9 @@ func resolveGapPackages() (clientPath, reactPath, serverPath string) {
 	if _, err := os.Stat(filepath.Join(reactDir, "package.json")); err == nil {
 		reactPath = reactDir
 	}
-	if _, err := os.Stat(filepath.Join(serverDir, "go.mod")); err == nil {
-		serverPath = serverDir
+	// Go module is at repo root (not server/)
+	if _, err := os.Stat(filepath.Join(gappRoot, "go.mod")); err == nil {
+		serverPath = gappRoot
 	}
 	return
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Router } from "@gap/client";
+import type { Router } from "@gapp/client";
 
 export function useCurrentRoute<Metadata>(router: Router<Metadata>): Metadata {
   const [metadata, setMetadata] = useState<Metadata>(router.current());

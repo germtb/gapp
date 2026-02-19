@@ -2,7 +2,7 @@ import { defineConfig, type Plugin, type ViteDevServer, type Connect } from "vit
 
 let currentRequestCookies: string | undefined;
 
-function gapPreloadPlugin(options?: {
+function gappPreloadPlugin(options?: {
   serverUrl?: string;
   preloadPath?: string;
 }): Plugin {
@@ -10,7 +10,7 @@ function gapPreloadPlugin(options?: {
   const preloadPath = options?.preloadPath ?? "/__preload";
 
   return {
-    name: "gap-preload",
+    name: "gapp-preload",
     configureServer(server: ViteDevServer) {
       server.middlewares.use((req: Connect.IncomingMessage, _res, next) => {
         currentRequestCookies = req.headers.cookie;
@@ -42,7 +42,7 @@ function gapPreloadPlugin(options?: {
 }
 
 export default defineConfig({
-  plugins: [gapPreloadPlugin()],
+  plugins: [gappPreloadPlugin()],
   server: {
     proxy: {
       "/rpc": "http://localhost:8080",

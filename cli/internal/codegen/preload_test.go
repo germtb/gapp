@@ -12,8 +12,8 @@ func TestParseRouteFile(t *testing.T) {
 
 	// React-style route
 	reactRoute := `import { useState } from "react";
-import { useStore } from "@gap/react";
-import type { RpcDeclaration } from "@gap/client";
+import { useStore } from "@gapp/react";
+import type { RpcDeclaration } from "@gapp/client";
 
 export const homeRoute = {
   path: "/",
@@ -168,14 +168,14 @@ func TestGeneratePreloadGo(t *testing.T) {
 	if !strings.Contains(code, "package generated") {
 		t.Error("Should contain package declaration")
 	}
-	if !strings.Contains(code, `import gap "github.com/germtb/gap"`) {
-		t.Error("Should import gap package")
+	if !strings.Contains(code, `import gapp "github.com/germtb/gapp"`) {
+		t.Error("Should import gapp package")
 	}
-	if !strings.Contains(code, `[]gap.RouteSpec{`) {
-		t.Error("Should use gap.RouteSpec type")
+	if !strings.Contains(code, `[]gapp.RouteSpec{`) {
+		t.Error("Should use gapp.RouteSpec type")
 	}
-	if !strings.Contains(code, `[]gap.RpcSpec{`) {
-		t.Error("Should use gap.RpcSpec type")
+	if !strings.Contains(code, `[]gapp.RpcSpec{`) {
+		t.Error("Should use gapp.RpcSpec type")
 	}
 	if !strings.Contains(code, `Pattern: "/"`) {
 		t.Error("Should contain root route pattern")

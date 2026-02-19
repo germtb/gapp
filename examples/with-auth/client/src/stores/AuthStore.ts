@@ -1,4 +1,4 @@
-import { Store } from "@gap/client";
+import { Store } from "@gapp/client";
 import { authRpc } from "../rpc";
 
 type AuthState = {

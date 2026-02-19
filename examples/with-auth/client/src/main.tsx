@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { dispatchPreloaded, Router, type Route } from "@gap/client";
-import { useCurrentRoute, useStore } from "@gap/react";
+import { dispatchPreloaded, Router, type Route } from "@gapp/client";
+import { useCurrentRoute, useStore } from "@gapp/react";
 import { decodePreloaded } from "./preload";
 import { authRpc } from "./rpc";
 import { authStore } from "./stores/AuthStore";

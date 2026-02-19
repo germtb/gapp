@@ -3,7 +3,7 @@ import type { Plugin, ViteDevServer, Connect } from "vite";
 // Store the current request's cookies for use in transformIndexHtml
 let currentRequestCookies: string | undefined;
 
-export function gapPreloadPlugin(options?: {
+export function gappPreloadPlugin(options?: {
   serverUrl?: string;
   preloadPath?: string;
 }): Plugin {
@@ -11,12 +11,12 @@ export function gapPreloadPlugin(options?: {
   const preloadPath = options?.preloadPath ?? "/__preload";
 
   return {
-    name: "gap-preload",
+    name: "gapp-preload",
 
     configureServer(server: ViteDevServer) {
       server.httpServer?.once("listening", () => {
         console.log(
-          "[gap-preload] Plugin active, fetching preloads from",
+          "[gapp-preload] Plugin active, fetching preloads from",
           serverUrl
         );
       });
@@ -42,7 +42,7 @@ export function gapPreloadPlugin(options?: {
           )}`;
 
           console.log(
-            `[gap-preload] Fetching preloads for path="${path}" (originalUrl="${originalUrl}"), cookies: ${
+            `[gapp-preload] Fetching preloads for path="${path}" (originalUrl="${originalUrl}"), cookies: ${
               currentRequestCookies ? "present" : "none"
             }`
           );
@@ -56,7 +56,7 @@ export function gapPreloadPlugin(options?: {
 
           if (!res.ok) {
             console.warn(
-              `[gap-preload] Server returned ${res.status} for ${path}`
+              `[gapp-preload] Server returned ${res.status} for ${path}`
             );
             return html;
           }
@@ -66,11 +66,11 @@ export function gapPreloadPlugin(options?: {
 
           if (methods.length > 0) {
             console.log(
-              `[gap-preload] Loaded ${methods.length} RPCs for ${path}:`,
+              `[gapp-preload] Loaded ${methods.length} RPCs for ${path}:`,
               methods
             );
           } else {
-            console.log(`[gap-preload] No RPCs matched for ${path}`);
+            console.log(`[gapp-preload] No RPCs matched for ${path}`);
           }
 
           const script = `<script>window.__PRELOADED__ = ${JSON.stringify(
@@ -79,10 +79,10 @@ export function gapPreloadPlugin(options?: {
           return html.replace("</head>", `${script}</head>`);
         } catch (err) {
           if ((err as Error).name === "TimeoutError") {
-            console.warn("[gap-preload] Server timeout, skipping preload");
+            console.warn("[gapp-preload] Server timeout, skipping preload");
           } else {
             console.warn(
-              "[gap-preload] Server unavailable, skipping preload:",
+              "[gapp-preload] Server unavailable, skipping preload:",
               (err as Error).message
             );
           }

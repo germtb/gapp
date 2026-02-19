@@ -1,7 +1,7 @@
 {
-  "name": "@gap/react",
+  "name": "@gapp/react",
   "version": "0.1.0",
-  "description": "React bindings for the gap full-stack framework",
+  "description": "React bindings for the gapp full-stack framework",
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@gap/client": "^0.1.0"
+    "@gapp/client": "^0.1.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0"
@@ -36,11 +36,11 @@
   "author": "Gerard Abellan Serrano",
   "repository": {
     "type": "git",
-    "url": "https://github.com/germtb/gap.git",
+    "url": "https://github.com/germtb/gapp.git",
     "directory": "react"
   },
   "keywords": [
-    "gap",
+    "gapp",
     "react",
     "hooks",
     "rpc",

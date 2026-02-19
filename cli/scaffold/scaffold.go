@@ -23,9 +23,9 @@ type ProjectConfig struct {
 	Name          string
 	Module        string
 	Framework     Framework
-	GapClientPath string // absolute path to @gap/client package
-	GapReactPath  string // absolute path to @gap/react package (react only)
-	GapServerPath string // absolute path to gap server Go module
+	GappClientPath string // absolute path to @gapp/client
+	GappReactPath  string // absolute path to @gapp/react (react only)
+	GappServerPath string // absolute path to gapp server Go module
 }
 
 // templateFile maps a template path to an output path.
@@ -42,7 +42,6 @@ var sharedFiles = []templateFile{
 	{"client/src/rpcTypes.ts.tmpl", "client/src/rpcTypes.ts"},
 	{"client/src/preload.ts.tmpl", "client/src/preload.ts"},
 	{"client/src/stores/ItemStore.ts.tmpl", "client/src/stores/ItemStore.ts"},
-	{"gap-codegen.sh.tmpl", "gap-codegen.sh"},
 	{"Dockerfile.tmpl", "Dockerfile"},
 }
 
@@ -83,7 +82,7 @@ func filesForFramework(fw Framework) []struct {
 	}
 }
 
-// Generate creates a new gap project in the given directory.
+// Generate creates a new gapp project in the given directory.
 // Returns the list of created files (relative to dir).
 func Generate(config ProjectConfig, dir string) ([]string, error) {
 	if config.Framework == "" {
