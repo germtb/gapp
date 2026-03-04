@@ -1,15 +1,18 @@
-import { dispatchRpc, dispatchSendRpc } from "./store";
+import type { StoreRegistry } from "./registry";
 import { ok, err } from "./result";
 
 /**
  * Creates a proxy around an RPC client that auto-dispatches to stores.
  * @param client The base RPC client to wrap
- * @param streamingMethods Methods that should not be wrapped (streaming methods)
+ * @param options.registry The store registry to dispatch events to
+ * @param options.streamingMethods Methods that should not be wrapped (streaming methods)
  */
 export function createRpcProxy<T extends object>(
   client: T,
-  streamingMethods: Set<string> = new Set()
+  options: { registry: StoreRegistry; streamingMethods?: Set<string> },
 ): T {
+  const { registry, streamingMethods = new Set() } = options;
+
   return new Proxy(client, {
     get(target, prop: string) {
       const original = target[prop as keyof T];
@@ -24,17 +27,17 @@ export function createRpcProxy<T extends object>(
 
       // Wrap unary methods to auto-dispatch send + result (ok/err)
       return async (request: unknown) => {
-        dispatchSendRpc({ method: prop, request });
+        registry.dispatchSendRpc({ method: prop, request });
         try {
           const response = await (original as Function).call(target, request);
-          dispatchRpc({
+          registry.dispatchRpc({
             method: prop,
             request,
             result: ok(response),
           });
           return response;
         } catch (error) {
-          dispatchRpc({
+          registry.dispatchRpc({
             method: prop,
             request,
             result: err(error as Error),

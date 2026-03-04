@@ -1,4 +1,5 @@
 import { Store } from "@gapp/client";
+import { registry } from "../rpc";
 import type { RpcResult } from "../rpcTypes";
 import type { Item } from "../generated/service";
 
@@ -7,10 +8,6 @@ type ItemState = {
 };
 
 class ItemStore extends Store<ItemState> {
-  constructor() {
-    super({ items: [] });
-  }
-
   reduceRpc(state: ItemState, event: RpcResult): ItemState {
     if (event.method === "GetItems" && event.result.isOk()) {
       return { ...state, items: event.result.unwrap().items };
@@ -22,4 +19,4 @@ class ItemStore extends Store<ItemState> {
   }
 }
 
-export const itemStore = new ItemStore();
+export const itemStore = registry.register(new ItemStore({ items: [] }));

@@ -2,11 +2,9 @@ export { createCallbackSet } from "./callbackSet";
 export { type Result, Ok, Err, ok, err } from "./result";
 export {
   Store,
-  dispatchRpc,
-  dispatchSendRpc,
-  dispatchPreloaded,
   type DecodedRpc,
 } from "./store";
+export { StoreRegistry } from "./registry";
 export {
   Router,
   type Route,

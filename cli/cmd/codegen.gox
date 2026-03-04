@@ -43,89 +43,105 @@ func RunCodegen(args []string) error {
 	routesDirFlag := fs.String("routes-dir", "client/src/routes", "Routes directory for preload config")
 	preloadOutFlag := fs.String("preload-out", "server/generated/preload_routes.go", "Preload config output path")
 	forceFlag := fs.Bool("force", false, "Force codegen even if proto hasn't changed")
+	preloadOnlyFlag := fs.Bool("preload-only", false, "Only generate preload routes config, skip proto compilation")
 
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	protoFile := *protoFlag
-	goOut := *goOutFlag
-	tsOut := *tsOutFlag
 	routesDir := *routesDirFlag
 	preloadOut := *preloadOutFlag
 
-	// Verify proto file exists
-	if _, err := os.Stat(protoFile); os.IsNotExist(err) {
-		goli.Print(<CodegenStep Label={"Proto file: " + protoFile} Success={false} Err={"file not found"} />)
-		return fmt.Errorf("proto file not found: %s", protoFile)
-	}
+	if !*preloadOnlyFlag {
+		protoFile := *protoFlag
+		goOut := *goOutFlag
+		tsOut := *tsOutFlag
 
-	protoDir := filepath.Dir(protoFile)
+		// Verify proto file exists
+		if _, err := os.Stat(protoFile); os.IsNotExist(err) {
+			goli.Print(<CodegenStep Label={"Proto file: " + protoFile} Success={false} Err={"file not found"} />)
+			return fmt.Errorf("proto file not found: %s", protoFile)
+		}
 
-	// Derive project root (parent of proto/)
-	projectDir := filepath.Dir(protoDir)
-	if filepath.Base(protoDir) != "proto" {
-		projectDir = "."
-	}
+		protoDir := filepath.Dir(protoFile)
 
-	// Hash-based caching
-	if !*forceFlag {
-		currentHash, err := codegen.HashFile(protoFile)
-		if err == nil {
-			storedHash := codegen.ReadStoredHash(projectDir)
-			if currentHash == storedHash {
-				goli.Print(<box direction="row">
-					<text color="green">{"✓"}</text>
-					<text>{" Proto unchanged, codegen up to date (use --force to re-run)"}</text>
-				</box>)
-				return nil
+		// Derive project root (parent of proto/)
+		projectDir := filepath.Dir(protoDir)
+		if filepath.Base(protoDir) != "proto" {
+			projectDir = "."
+		}
+
+		// Hash-based caching — only gates proto compilation (steps 1-3)
+		protoChanged := *forceFlag
+		if !protoChanged {
+			currentHash, err := codegen.HashFile(protoFile)
+			if err == nil {
+				storedHash := codegen.ReadStoredHash(projectDir)
+				protoChanged = currentHash != storedHash
+			} else {
+				protoChanged = true
+			}
+		}
+
+		protoName := filepath.Base(protoFile)
+
+		if protoChanged {
+			// Ensure output directories exist
+			os.MkdirAll(goOut, 0755)
+			os.MkdirAll(tsOut, 0755)
+
+			// Step 1: Compile proto with protocompile (no protoc binary needed)
+			req, err := codegen.CompileProto(protoDir, protoName)
+			if err != nil {
+				goli.Print(<CodegenStep Label={"Proto compilation"} Success={false} Err={err.Error()} />)
+				return fmt.Errorf("proto compilation failed: %w", err)
+			}
+			goli.Print(<CodegenStep Label={"Proto compilation"} Success={true} Err={""} />)
+
+			// Step 2: Generate Go code via protoc-gen-go
+			goResp, err := codegen.RunGoPlugin(req, "paths=source_relative")
+			if err != nil {
+				goli.Print(<CodegenStep Label={"Go codegen"} Success={false} Err={err.Error()} />)
+				return fmt.Errorf("Go codegen failed: %w", err)
+			}
+			if _, err := codegen.WriteResponse(goResp, goOut); err != nil {
+				goli.Print(<CodegenStep Label={"Go codegen"} Success={false} Err={err.Error()} />)
+				return fmt.Errorf("writing Go output: %w", err)
+			}
+			goli.Print(<CodegenStep Label={"Go codegen → " + goOut} Success={true} Err={""} />)
+
+			// Step 3: Generate TypeScript code via protoc-gen-ts_proto
+			tsPlugin, err := findTsProtoPlugin(filepath.Dir(tsOut))
+			if err != nil {
+				goli.Print(<CodegenStep Label={"TypeScript codegen"} Success={false} Err={err.Error()} />)
+				return err
+			}
+			tsResp, err := codegen.RunPlugin(req, tsPlugin, "outputServices=default,esModuleInterop=true,useOptionals=messages")
+			if err != nil {
+				goli.Print(<CodegenStep Label={"TypeScript codegen"} Success={false} Err={err.Error()} />)
+				return fmt.Errorf("TypeScript codegen failed: %w", err)
+			}
+			if _, err := codegen.WriteResponse(tsResp, tsOut); err != nil {
+				goli.Print(<CodegenStep Label={"TypeScript codegen"} Success={false} Err={err.Error()} />)
+				return fmt.Errorf("writing TypeScript output: %w", err)
+			}
+			goli.Print(<CodegenStep Label={"TypeScript codegen → " + tsOut} Success={true} Err={""} />)
+		} else {
+			goli.Print(<box direction="row">
+				<text color="green">{"✓"}</text>
+				<text>{" Proto unchanged, skipping compilation (use --force to re-run)"}</text>
+			</box>)
+		}
+
+		// Write hash after successful proto codegen
+		if protoChanged {
+			if hash, err := codegen.HashFile(protoFile); err == nil {
+				codegen.WriteHash(projectDir, hash)
 			}
 		}
 	}
-	protoName := filepath.Base(protoFile)
 
-	// Ensure output directories exist
-	os.MkdirAll(goOut, 0755)
-	os.MkdirAll(tsOut, 0755)
-
-	// Step 1: Compile proto with protocompile (no protoc binary needed)
-	req, err := codegen.CompileProto(protoDir, protoName)
-	if err != nil {
-		goli.Print(<CodegenStep Label={"Proto compilation"} Success={false} Err={err.Error()} />)
-		return fmt.Errorf("proto compilation failed: %w", err)
-	}
-	goli.Print(<CodegenStep Label={"Proto compilation"} Success={true} Err={""} />)
-
-	// Step 2: Generate Go code via protoc-gen-go
-	goResp, err := codegen.RunGoPlugin(req, "paths=source_relative")
-	if err != nil {
-		goli.Print(<CodegenStep Label={"Go codegen"} Success={false} Err={err.Error()} />)
-		return fmt.Errorf("Go codegen failed: %w", err)
-	}
-	if _, err := codegen.WriteResponse(goResp, goOut); err != nil {
-		goli.Print(<CodegenStep Label={"Go codegen"} Success={false} Err={err.Error()} />)
-		return fmt.Errorf("writing Go output: %w", err)
-	}
-	goli.Print(<CodegenStep Label={"Go codegen → " + goOut} Success={true} Err={""} />)
-
-	// Step 3: Generate TypeScript code via protoc-gen-ts_proto
-	tsPlugin, err := findTsProtoPlugin(filepath.Dir(tsOut))
-	if err != nil {
-		goli.Print(<CodegenStep Label={"TypeScript codegen"} Success={false} Err={err.Error()} />)
-		return err
-	}
-	tsResp, err := codegen.RunPlugin(req, tsPlugin, "outputServices=default,esModuleInterop=true,useOptionals=messages")
-	if err != nil {
-		goli.Print(<CodegenStep Label={"TypeScript codegen"} Success={false} Err={err.Error()} />)
-		return fmt.Errorf("TypeScript codegen failed: %w", err)
-	}
-	if _, err := codegen.WriteResponse(tsResp, tsOut); err != nil {
-		goli.Print(<CodegenStep Label={"TypeScript codegen"} Success={false} Err={err.Error()} />)
-		return fmt.Errorf("writing TypeScript output: %w", err)
-	}
-	goli.Print(<CodegenStep Label={"TypeScript codegen → " + tsOut} Success={true} Err={""} />)
-
-	// Step 4: Generate preload routes config
+	// Generate preload routes config
 	if routesDir != "" && preloadOut != "" {
 		if _, err := os.Stat(routesDir); err == nil {
 			routes, err := codegen.ScanRoutes(routesDir)
@@ -148,11 +164,6 @@ func RunCodegen(args []string) error {
 				goli.Print(<CodegenStep Label={"Preload config → " + preloadOut} Success={true} Err={""} />)
 			}
 		}
-	}
-
-	// Write hash after successful codegen
-	if hash, err := codegen.HashFile(protoFile); err == nil {
-		codegen.WriteHash(projectDir, hash)
 	}
 
 	return nil

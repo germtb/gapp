@@ -1,5 +1,5 @@
 import { Store } from "@gapp/client";
-import { authRpc } from "../rpc";
+import { authRpc, registry } from "../rpc";
 
 type AuthState = {
   status: "loading" | "logged-in" | "logged-out";
@@ -7,10 +7,6 @@ type AuthState = {
 };
 
 class AuthStore extends Store<AuthState> {
-  constructor() {
-    super({ status: "loading", username: null });
-  }
-
   reduceRpc(state: AuthState, event: any): AuthState {
     if (event.method === "Status" && event.result.isOk()) {
       const { isAuthenticated, username } = event.result.unwrap();
@@ -36,4 +32,4 @@ class AuthStore extends Store<AuthState> {
   }
 }
 
-export const authStore = new AuthStore();
+export const authStore = registry.register(new AuthStore({ status: "loading", username: null }));

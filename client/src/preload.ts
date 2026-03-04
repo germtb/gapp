@@ -1,5 +1,3 @@
-import { BinaryReader } from "@bufbuild/protobuf/wire";
-
 // Preloaded data structure embedded in HTML (gzip-compressed, base64-encoded protobuf bytes)
 export type PreloadedData = {
   [method: string]: {
@@ -23,7 +21,7 @@ export type RpcDeclaration = {
 
 export type DecoderMap = Record<
   string,
-  (reader: BinaryReader) => unknown
+  (bytes: Uint8Array) => unknown
 >;
 
 /**
@@ -109,13 +107,13 @@ export async function decodeAllPreloaded(
       if (requestBytes && reqDecoder) {
         const compressedReq = base64ToBytes(requestBytes);
         const reqBytes = await decompressGzip(compressedReq);
-        request = reqDecoder(new BinaryReader(reqBytes));
+        request = reqDecoder(reqBytes);
       }
 
       // Decode response (decompress gzipped data)
       const compressedRes = base64ToBytes(responseBytes);
       const resBytes = await decompressGzip(compressedRes);
-      const response = resDecoder(new BinaryReader(resBytes));
+      const response = resDecoder(resBytes);
 
       results.push({ method, request, response });
     } catch (err) {

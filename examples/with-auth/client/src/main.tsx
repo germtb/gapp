@@ -1,8 +1,8 @@
 import { createRoot } from "react-dom/client";
-import { dispatchPreloaded, Router, type Route } from "@gapp/client";
+import { Router, type Route } from "@gapp/client";
 import { useCurrentRoute, useStore } from "@gapp/react";
 import { decodePreloaded } from "./preload";
-import { authRpc } from "./rpc";
+import { authRpc, registry } from "./rpc";
 import { authStore } from "./stores/AuthStore";
 import { HomeRoute } from "./routes/HomeRoute";
 import { LoginRoute } from "./routes/LoginRoute";
@@ -34,7 +34,8 @@ function App() {
 }
 
 async function main() {
-  await dispatchPreloaded(decodePreloaded);
+  const decoded = await decodePreloaded();
+  registry.hydrate(decoded);
   authRpc.Status({});
 
   const root = document.getElementById("root");

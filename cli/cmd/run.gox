@@ -16,34 +16,56 @@ import (
 	"github.com/germtb/gox"
 )
 
-type LogPaneProps struct {
-	Title string
-	Lines goli.Accessor[[]string]
+type RunAppProps struct {
+	ServerLines goli.Accessor[[]string]
+	ClientLines goli.Accessor[[]string]
+	GappLines   goli.Accessor[[]string]
+	ActiveTab   goli.Accessor[int]
 }
 
-func LogPane(props LogPaneProps) gox.VNode {
-	lines := props.Lines()
+func RunApp(props RunAppProps) gox.VNode {
+	active := props.ActiveTab()
+	var lines []string
+	switch active {
+	case 1:
+		lines = props.ServerLines()
+	case 2:
+		lines = props.ClientLines()
+	case 3:
+		lines = props.GappLines()
+	}
 
-	return <box direction="column" grow={1} border="rounded" overflow="hidden">
+	// Trim to terminal height minus tab bar
+	_, termHeight, _ := goli.GetSize(int(os.Stdout.Fd()))
+	visibleLines := termHeight - 1
+	if visibleLines < 1 {
+		visibleLines = 1
+	}
+	if len(lines) > visibleLines {
+		lines = lines[len(lines)-visibleLines:]
+	}
+
+	serverLabel := " 1 Server "
+	clientLabel := " 2 Client "
+	gappLabel := " 3 Gapp "
+	if active == 1 {
+		serverLabel = " ● Server "
+	} else if active == 2 {
+		clientLabel = " ● Client "
+	} else {
+		gappLabel = " ● Gapp "
+	}
+
+	return <box direction="column" grow={1}>
 		<box direction="row">
-			<text bold={true}>{" " + props.Title + " "}</text>
+			<text bold={active == 1} inverse={active == 1}>{serverLabel}</text>
+			<text bold={active == 2} inverse={active == 2}>{clientLabel}</text>
+			<text bold={active == 3} inverse={active == 3}>{gappLabel}</text>
+			<text dim={true}>{" Ctrl+C to stop"}</text>
 		</box>
 		{gox.Map(lines, func(line string) gox.VNode {
 			return <ansi>{line}</ansi>
 		})}
-	</box>
-}
-
-type RunAppProps struct {
-	ServerLines goli.Accessor[[]string]
-	ClientLines goli.Accessor[[]string]
-}
-
-func RunApp(props RunAppProps) gox.VNode {
-	return <box direction="column" grow={1}>
-		<LogPane Title="server" Lines={props.ServerLines} />
-		<LogPane Title="client" Lines={props.ClientLines} />
-		<text dim={true}>{" Ctrl+C to stop"}</text>
 	</box>
 }
 
@@ -80,11 +102,24 @@ func RunRun(args []string) error {
 
 	serverLines, setServerLines := goli.CreateSignal([]string{})
 	clientLines, setClientLines := goli.CreateSignal([]string{})
+	gappLines, setGappLines := goli.CreateSignal([]string{})
+	activeTab, setActiveTab := goli.CreateSignal(1)
+
+	logGapp := func(msg string) {
+		goli.SetWith(setGappLines, func(prev []string) []string {
+			next := append(prev, msg)
+			if len(next) > 500 {
+				next = next[len(next)-500:]
+			}
+			return next
+		}, gappLines)
+	}
 
 	var serverCmd *exec.Cmd
 	var clientCmd *exec.Cmd
 	var mu sync.Mutex
 	var watcher *fsnotify.Watcher
+	var codegenWatcher *fsnotify.Watcher
 
 	var cleanupOnce sync.Once
 	cleanup := func() {
@@ -95,6 +130,9 @@ func RunRun(args []string) error {
 			killProcessGroup(clientCmd)
 			if watcher != nil {
 				watcher.Close()
+			}
+			if codegenWatcher != nil {
+				codegenWatcher.Close()
 			}
 		})
 	}
@@ -172,17 +210,31 @@ func RunRun(args []string) error {
 		// Give the old process a moment to exit
 		time.Sleep(100 * time.Millisecond)
 
-		goli.SetWith(setServerLines, func(prev []string) []string {
-			return append(prev, "File change detected, restarting...")
-		}, serverLines)
+		logGapp("Server file change detected, restarting...")
 
 		startServer()
 	}
 
 	goli.Run(func() gox.VNode {
-		return <RunApp ServerLines={serverLines} ClientLines={clientLines} />
+		return <RunApp ServerLines={serverLines} ClientLines={clientLines} GappLines={gappLines} ActiveTab={activeTab} />
 	}, goli.RunOptions{
 		OnMount: func(app *goli.App) {
+			goli.Manager().SetGlobalKeyHandler(func(key string) bool {
+				if key == "1" {
+					setActiveTab(1)
+					return true
+				}
+				if key == "2" {
+					setActiveTab(2)
+					return true
+				}
+				if key == "3" {
+					setActiveTab(3)
+					return true
+				}
+				return false
+			})
+
 			go func() {
 				ticker := time.NewTicker(50 * time.Millisecond)
 				defer ticker.Stop()
@@ -191,16 +243,44 @@ func RunRun(args []string) error {
 				}
 			}()
 
+			logGapp("Starting server: go run . (" + serverDir + ")")
 			startServer()
+			logGapp("Starting client: vite (" + clientDir + ")")
 			clientCmd = startSubprocess("./node_modules/.bin/vite", nil, clientDir, setClientLines, clientLines)
 
 			// Watch for .go file changes and restart server
+			logGapp("Watching " + serverDir + " for .go changes")
 			var watchErr error
 			watcher, watchErr = WatchGoFiles(serverDir, 300*time.Millisecond, restartServer)
 			if watchErr != nil {
-				goli.SetWith(setServerLines, func(prev []string) []string {
-					return append(prev, "Warning: file watcher failed: "+watchErr.Error())
-				}, serverLines)
+				logGapp("Warning: file watcher failed: " + watchErr.Error())
+			}
+
+			// Run codegen at startup and watch for proto/route changes
+			protoDir := filepath.Join(projectDir, "proto")
+			routesDir := filepath.Join(projectDir, "client", "src", "routes")
+			if _, err := os.Stat(protoDir); err == nil {
+				logGapp("Running initial codegen...")
+				go func() {
+					if err := RunCodegen(nil); err != nil {
+						logGapp("Codegen error: " + err.Error())
+					} else {
+						logGapp("Codegen complete")
+					}
+				}()
+
+				var cwErr error
+				codegenWatcher, cwErr = WatchCodegenFiles(protoDir, routesDir, 500*time.Millisecond, func() {
+					logGapp("Proto/route change detected, running codegen...")
+					if err := RunCodegen(nil); err != nil {
+						logGapp("Codegen error: " + err.Error())
+					} else {
+						logGapp("Codegen complete")
+					}
+				})
+				if cwErr != nil {
+					logGapp("Warning: codegen watcher failed: " + cwErr.Error())
+				}
 			}
 		},
 		OnUnmount: func() {
