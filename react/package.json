@@ -33,7 +33,7 @@
     "typescript": "^5.9.3"
   },
   "license": "MIT",
-  "author": "Gerard Abellan Serrano",
+  "author": "Gerard Moreno-Torres Bertran",
   "repository": {
     "type": "git",
     "url": "https://github.com/germtb/gapp.git",

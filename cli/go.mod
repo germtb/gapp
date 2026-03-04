@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/bufbuild/protocompile v0.14.1
 	github.com/fsnotify/fsnotify v1.9.0
-	github.com/germtb/goli v0.1.11
+	github.com/germtb/goli v0.1.12
 	github.com/germtb/gox v0.1.4
 	google.golang.org/protobuf v1.36.11
 )
@@ -16,5 +16,3 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 )
-
-replace github.com/germtb/goli => /Users/gerard/dev/goli
