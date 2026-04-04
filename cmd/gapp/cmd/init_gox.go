@@ -10,7 +10,7 @@ import (
 	"github.com/germtb/goli"
 	"github.com/germtb/gox"
 
-	"github.com/germtb/gapp/cli/scaffold"
+	"github.com/germtb/gapp/cmd/gapp/scaffold"
 )
 
 type InitResultProps struct {

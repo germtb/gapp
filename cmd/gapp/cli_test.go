@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/germtb/gapp/cli/internal/codegen"
-	"github.com/germtb/gapp/cli/scaffold"
+	"github.com/germtb/gapp/cmd/gapp/internal/codegen"
+	"github.com/germtb/gapp/cmd/gapp/scaffold"
 )
 
 func TestInitGeneratesReactProject(t *testing.T) {

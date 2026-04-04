@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/germtb/gapp/cli/cmd"
+	"github.com/germtb/gapp/cmd/gapp/cmd"
 )
 
 func main() {

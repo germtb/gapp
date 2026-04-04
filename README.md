@@ -15,7 +15,7 @@ Full-stack Go + TypeScript framework with protobuf RPC, code generation, and pre
 
 ```bash
 # Install the CLI
-go install github.com/germtb/gapp/cli@latest
+go install github.com/germtb/gapp/cmd/gapp@latest
 
 # Create a new project
 gapp init myapp --framework react -y

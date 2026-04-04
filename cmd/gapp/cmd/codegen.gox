@@ -10,7 +10,7 @@ import (
 	"github.com/germtb/goli"
 	"github.com/germtb/gox"
 
-	"github.com/germtb/gapp/cli/internal/codegen"
+	"github.com/germtb/gapp/cmd/gapp/internal/codegen"
 )
 
 type CodegenStepProps struct {
